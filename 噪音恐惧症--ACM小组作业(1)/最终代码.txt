@@ -1,0 +1,176 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define MAXVERTICES 100 //数组大小
+int visited[MAXVERTICES];     //定义存放节点的访问标志的全局数组
+int MAX[100];//存放各个路径的最大值
+int Max[100];//存放路径中各边的的值
+typedef int	QElemType; //队列数据类型
+typedef char ElemType;//顶点数据类型
+
+typedef struct NODE
+{
+	int adjvex;//顶点下标
+	int weight;//权值
+	struct NODE* next;//指向下一个结点
+}EdgeNode;//边节点
+
+typedef struct
+{
+	ElemType vertex;//顶点的值
+	EdgeNode* edgenext;//边表
+}VertexNode;//顶点结构体
+
+typedef VertexNode AdjList[MAXVERTICES];
+
+typedef struct
+{
+	AdjList adjlist;
+	int Vn;//顶点个数
+	int Ve;//边的个数
+}AdjTable;//图的结构体
+
+//创建邻接表
+void creatTable1(AdjTable* G)
+{
+	int n, e, vi, vj, w;
+	int i = 0,j=0;
+	char x, y;
+	EdgeNode* s;//边节点
+	printf("请输入有向图图的顶点和边的个数（回车或空格）：\n");
+	scanf("%d%d", &n, &e);
+	G->Vn = n;
+	G->Ve = e;
+	printf("\n建立边表(顶点请输入大写字母)\n");
+	for (i = 0; i < n; i++)                 //给邻接表中所有头节点的指针域置初值  
+		G->adjlist[i].edgenext = NULL;
+	for (j=0; j < G->Ve; j++)
+	{
+		printf("输入有链接的顶点和权值（回车键隔开最好）：\n");
+		scanf(" %c", &x);
+		scanf(" %c", &y);
+		scanf("%d",&w);
+		vi = x - 65;
+		vj = y - 65;//将大写字母化作数字
+		s = (EdgeNode*)malloc(sizeof(EdgeNode));
+		s->adjvex = vj;
+		s->weight = w;
+		s->next = G->adjlist[vi].edgenext;
+		G->adjlist[vi].edgenext = s;
+
+		s = (EdgeNode*)malloc(sizeof(EdgeNode));
+		s->adjvex = vi;
+		s->weight = w;
+		s->next = G->adjlist[vj].edgenext;
+		G->adjlist[vj].edgenext = s;//赋值
+	}
+
+}
+
+//显示连接表（自我检查和对照用）
+void ShowAdjTable(AdjTable* G)
+{
+	int i = 0;
+	printf("\n显示边的信息：\n");
+	for (i = 0; i < G->Vn; i++)
+	{
+		EdgeNode* q = G->adjlist[i].edgenext;
+		printf("%c", i + 65);
+		while (1)
+		{
+			if (q == NULL)
+			{
+				break;
+			}
+			printf("->(w = %d)->%c      ", q->weight, q->adjvex + 65);
+			q = q->next;
+		}
+		printf("\n");
+	}
+}
+
+//下个函数的一部分
+void FindMax(AdjTable G, int u, int v, int path[], int d)
+//d是到当前为止已走过的路径长度，调用时初值为0
+{
+	int w, i,k=0,max=0;
+	EdgeNode* p;
+	visited[u] = 1;
+	d++;            //路径长度增1  
+	path[d] = u;              //将当前顶点添加到路径中  
+	if (u == v && d > 1)            //输出路径和最大值  
+	{
+		printf("  ");
+		for (i = 0; i <= d; i++)
+			printf("%c ", path[i] + 65);
+		for (i = 0; i <d; i++)
+			if (max < Max[i])
+				max = Max[i];
+		printf("%d", max);
+		while (MAX[k] != 0) k++;
+		MAX[k] = max;
+		printf("\n");
+	}
+	p = G.adjlist[u].edgenext; //p指向u的第一条边
+	while (p != NULL)
+	{
+		w = p->adjvex;     //w为u的邻接顶点
+		Max[d] = p->weight;
+		if (visited[w] == 0)      //若顶点未标记访问，则递归访问之  
+		{
+			FindMax(G, w, v, path, d);
+		}
+		p = p->next; //找u的下一个邻接顶点  
+	}
+	visited[u] = 0;//恢复环境  
+}
+
+//找最大值
+void DispMax(AdjTable G, int u, int v)
+{
+	int i;
+	int path[MAXVERTICES];
+	char x ,y;
+	x = u + 65;
+	y = v + 65;
+	for (i = 0; i < 100; i++)
+	{
+		visited[i] = 0; 
+		MAX[i] = 0;
+		Max[i] = 0;//多个数组初始化  
+	}
+	printf("从%c到%c的所有路径:\n", x, y);
+	FindMax(G, u, v, path, 0);
+	printf("\n");
+}
+
+int main()
+{
+	char x, y;
+	int u, v;
+	int i = 0;
+	AdjTable G;
+	creatTable1(&G);
+	ShowAdjTable(&G);
+	while (1) {
+		int min = 100;
+		printf("(初始点用大写字母)\n请输入查询的初始点和终点：\n(当两个输入相同时结束)\n");
+		scanf(" %c", &x);
+		scanf(" %c", &y);
+		if (x == y)
+			break;
+		u = x - 65;
+		v = y - 65;
+		DispMax(G, u, v);
+		for (i = 0; i < 100; i++)
+		{ 
+			if (MAX[i] != 0)
+			{
+				if (MAX[i] < min)
+					min = MAX[i];
+			}
+		}
+		printf("最大噪声值最小为%d",min);
+		printf("\n\n\n");
+	}
+	return 0;
+}
